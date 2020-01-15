@@ -1,15 +1,18 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import createError from "http-errors";
+import { isUserNameUnique } from "../utils/isUnique";
 import pool from "../configs/mysql";
 
 export const signup = async (req, res, next) => {
   try {
+    const { user_name, email, password } = req.body;
+    const isUnique = await isUserNameUnique(user_name);
+    if (!isUnique) throw createError(500, "this username is already taken");
+
     const connection = await pool.getConnection();
-    bcrypt.hash(req.body.password, 10, async (err, hash) => {
-      if (err) {
-        throw err;
-      }
-      const { user_name, email } = req.body;
+    bcrypt.hash(password, 10, async (err, hash) => {
+      if (err) throw err;
       const query = {
         ...req.body,
         display_name: req.body.user_name,
@@ -30,7 +33,9 @@ export const signup = async (req, res, next) => {
         email: email,
         profile_image_url: null
       };
-      const token = jwt.sign(user, process.env.JWT_SECRET_KEY);
+      const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
+        expiresIn: "90 days"
+      });
       return res.json({ token });
     });
   } catch (err) {
@@ -51,13 +56,10 @@ export const signin = async (req, res, next) => {
       .catch(err => {
         next(err);
       });
-    if (rows.length === 0) {
-      return res.json({ error: "ユーザーが存在しません" });
-    }
+    if (rows.length === 0) throw createError(404, "User not found");
+
     bcrypt.compare(password, rows.password, (err, result) => {
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
       if (result) {
         const user = {
           id: rows.id,
@@ -66,10 +68,12 @@ export const signin = async (req, res, next) => {
           email: rows.email,
           profile_image_url: rows.profile_image_url
         };
-        const token = jwt.sign(user, process.env.JWT_SECRET_KEY);
+        const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
+          expiresIn: "90 days"
+        });
         return res.json({ token });
       } else {
-        return res.json({ error: "パスワードが間違ってるぞコラ" }); // TODO
+        throw createError(401, "Invalid Password");
       }
     });
   } catch (err) {

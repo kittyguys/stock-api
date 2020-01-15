@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { isUserNameUnique } from "../utils/isUnique";
 import pool from "../configs/mysql";
 import { s3 } from "../configs/aws";
 
@@ -7,6 +8,16 @@ export const getUsers = async (req, res, next) => {
     return res.json({ status: "ok" });
   } catch (error) {
     return null;
+  }
+};
+
+export const checkUserName = async (req, res, next) => {
+  try {
+    const { user_name } = req.body;
+    const isUnique = await isUserNameUnique(user_name);
+    return res.json({ isUnique });
+  } catch (err) {
+    next(err);
   }
 };
 
