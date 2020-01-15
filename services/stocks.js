@@ -1,7 +1,7 @@
 import bluebird from "bluebird";
 import redis from "redis";
 import Stock from "../models/stocks";
-import pool from "../configs/mysql";
+import { pool } from "../configs/mysql";
 
 bluebird.promisifyAll(redis);
 
@@ -90,8 +90,8 @@ export const addStock = async (req, res, next) => {
 export const reorderStock = async (req, res, next) => {
   let connection;
   try {
-    connection = await pool.getConnection();
-    const client = await redis.createClient(6379, "redis");
+    connection = await pool;
+    const client = await redis.createClient(6379, process.env.HOST);
     const { id } = req.user;
     const { stocks } = req.body;
     const temp = stocks.map((item, i) => {
@@ -122,10 +122,7 @@ export const reorderStock = async (req, res, next) => {
 
     res.sendStatus(200);
   } catch (err) {
-    await connection.rollback();
     next(err);
-  } finally {
-    connection.release();
   }
 };
 

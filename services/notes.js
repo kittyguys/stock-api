@@ -3,7 +3,7 @@ import redis from "redis";
 
 export const getNote = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool;
     const { note_id } = req.params;
     const stocks = await connection
       .query(
@@ -24,7 +24,7 @@ export const getNote = async (req, res, next) => {
 
 export const createNote = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool;
     const { id } = req.user;
     const { title } = req.body;
     const query = {
@@ -53,7 +53,7 @@ export const createNote = async (req, res, next) => {
 export const addStock = async (req, res, next) => {
   let connection;
   try {
-    connection = await pool.getConnection();
+    connection = await pool;
     await connection.beginTransaction();
     const { note_id } = req.params;
     const { stock_id } = req.body;
@@ -92,7 +92,7 @@ export const addStock = async (req, res, next) => {
 
 export const renameNote = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool;
     const { note_id } = req.params;
     const { title } = req.body;
     const columns = {
@@ -112,7 +112,7 @@ export const renameNote = async (req, res, next) => {
 export const reorderStocks = async (req, res, next) => {
   let connection;
   try {
-    connection = await pool.getConnection();
+    connection = await pool;
     const client = await redis.createClient(6379, "redis");
     const { id } = req.user;
     const { note_id } = req.params;

@@ -10,7 +10,7 @@ export const signup = async (req, res, next) => {
     const isUnique = await isUserNameUnique(user_name);
     if (!isUnique) throw createError(500, "this username is already taken");
 
-    const connection = await pool.getConnection();
+    const connection = await pool;
     bcrypt.hash(password, 10, async (err, hash) => {
       if (err) throw err;
       const query = {
@@ -45,7 +45,7 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool;
     const password = req.body.password;
     const signinID = req.body.signinID;
     const rows = await connection

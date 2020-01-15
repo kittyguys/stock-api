@@ -23,7 +23,7 @@ export const checkUserName = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool;
     const { id } = req.user;
     const query = req.body;
     const files = req.files;

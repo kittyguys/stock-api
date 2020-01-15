@@ -1,7 +1,7 @@
 import pool from "../configs/mysql";
 
 export const isUserNameUnique = async userName => {
-  const connection = await pool.getConnection();
+  const connection = await pool;
   const result = await connection
     .query("SELECT * FROM users WHERE user_name = ? LIMIT 1", [userName])
     .then(data => {
