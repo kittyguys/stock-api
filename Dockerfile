@@ -1,6 +1,6 @@
 FROM node:12.14.1
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/stock
 
 COPY package*.json ./
 
@@ -11,4 +11,4 @@ COPY . .
 RUN apt-get update -qq && \
   apt-get install -y mariadb-client vim
 
-CMD ["npm" ,"run", "dev"]
+CMD ["npm" ,"start"]
