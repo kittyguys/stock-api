@@ -8,7 +8,7 @@ export const isUserNameUnique = async userName => {
       return data[0].length;
     })
     .catch(err => {
-      next(err);
+      console.log(err);
     });
   const isUnique = result ? false : true;
   return isUnique;
