@@ -1,6 +1,27 @@
 import pool from "../configs/mysql";
 import redis from "redis";
 
+export const getNotes = async (req, res, next) => {
+  try {
+    const connection = await pool;
+    const { id } = req.user;
+    const notes = await connection
+      .query(
+        "SELECT id,title,created_at FROM notes WHERE user_id=? ORDER BY updated_at DESC",
+        id
+      )
+      .then(data => {
+        return data[0];
+      })
+      .catch(err => {
+        next(err);
+      });
+    return res.json({ notes });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getNote = async (req, res, next) => {
   try {
     const connection = await pool;
