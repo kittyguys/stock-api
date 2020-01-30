@@ -9,6 +9,7 @@ export const isUserNameUnique = async userName => {
     })
     .catch(err => {
       console.log(err);
+      throw err;
     });
   const isUnique = result ? false : true;
   return isUnique;
