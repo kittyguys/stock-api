@@ -5,7 +5,7 @@ export const getNotes = async (req, res, next) => {
   try {
     const connection = await pool;
     const { id } = req.user;
-    const notes = await connection
+    const rows = await connection
       .query(
         "SELECT id,title,created_at FROM notes WHERE user_id=? ORDER BY updated_at DESC",
         id
@@ -16,6 +16,9 @@ export const getNotes = async (req, res, next) => {
       .catch(err => {
         next(err);
       });
+    const notes = rows.map(item => {
+      return { ...item, id: "" + item.id };
+    });
     return res.json({ notes });
   } catch (err) {
     next(err);
@@ -28,7 +31,11 @@ export const getNote = async (req, res, next) => {
     const { note_id } = req.params;
     const stocks = await connection
       .query(
-        "SELECT * FROM stocks JOIN notes_stocks ON notes_stocks.stock_id = stocks.id AND notes_stocks.note_id = ?",
+        "SELECT stocks.id,stocks.content,stocks.created_at " +
+          "FROM stocks " +
+          "JOIN notes_stocks ON notes_stocks.stock_id = stocks.id " +
+          "AND notes_stocks.note_id = ? " +
+          "ORDER BY notes_stocks.stock_order",
         [note_id]
       )
       .then(data => {
@@ -37,7 +44,7 @@ export const getNote = async (req, res, next) => {
       .catch(err => {
         next(err);
       });
-    return res.json({ stocks });
+    return res.json({ id: note_id, stocks });
   } catch (err) {
     next(err);
   }
@@ -74,7 +81,7 @@ export const createNote = async (req, res, next) => {
 export const addStock = async (req, res, next) => {
   let connection;
   try {
-    connection = await pool;
+    connection = await pool.getConnection();
     await connection.beginTransaction();
     const { note_id } = req.params;
     const { stock_id } = req.body;
@@ -101,8 +108,18 @@ export const addStock = async (req, res, next) => {
       .catch(err => {
         throw err;
       });
+    const stock = await connection
+      .query("SELECT id,content,created_at FROM stocks WHERE id = ?", [
+        stock_id
+      ])
+      .then(data => {
+        return data[0];
+      })
+      .catch(err => {
+        throw err;
+      });
     await connection.commit();
-    return res.sendStatus(200);
+    return res.json({ stock });
   } catch (err) {
     await connection.rollback();
     next(err);
@@ -133,8 +150,8 @@ export const renameNote = async (req, res, next) => {
 export const reorderStocks = async (req, res, next) => {
   let connection;
   try {
-    connection = await pool;
-    const client = await redis.createClient(6379, "redis");
+    connection = await pool.getConnection();
+    const client = await redis.createClient(6379, process.env.REDIS_HOST);
     const { id } = req.user;
     const { note_id } = req.params;
     const { stocks } = req.body;
@@ -160,15 +177,26 @@ export const reorderStocks = async (req, res, next) => {
           i,
           result[i]
         ])
-        .then(data => {
-          return data[0];
-        })
         .catch(err => {
           throw err;
         });
     }
-
-    res.sendStatus(200);
+    const reorderedStocks = await connection
+      .query(
+        "SELECT stocks.id,stocks.content,stocks.created_at " +
+          "FROM stocks " +
+          "JOIN notes_stocks ON notes_stocks.stock_id = stocks.id " +
+          "AND notes_stocks.note_id = ? " +
+          "ORDER BY notes_stocks.stock_order",
+        [note_id]
+      )
+      .then(data => {
+        return data[0];
+      })
+      .catch(err => {
+        next(err);
+      });
+    return res.json({ stocks: reorderedStocks });
   } catch (err) {
     await connection.rollback();
     next(err);
