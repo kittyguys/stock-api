@@ -11,7 +11,7 @@ export const getStocks = async (req, res, next) => {
     const { id } = req.user;
     const rows = await connection
       .query(
-        "SELECT * FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 10",
+        "SELECT id,content,created_at FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 10",
         id
       )
       .then(data => {
@@ -91,7 +91,7 @@ export const reorderStock = async (req, res, next) => {
   let connection;
   try {
     connection = await pool;
-    const client = await redis.createClient(6379, process.env.HOST);
+    const client = await redis.createClient(6379, process.env.REDIS_HOST);
     const { id } = req.user;
     const { stocks } = req.body;
     const temp = stocks.map((item, i) => {
