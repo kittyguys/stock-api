@@ -8,7 +8,7 @@ export const signup = async (req, res, next) => {
   try {
     const { user_name, email, password } = req.body;
     const isUnique = await isUserNameUnique(user_name);
-    if (!isUnique) throw createError(500, "this username is already taken");
+    if (!isUnique) throw createError(500, "こちらのidはご利用いただけません。");
 
     const connection = await pool;
     bcrypt.hash(password, 10, async (err, hash) => {
@@ -51,29 +51,32 @@ export const signin = async (req, res, next) => {
     const rows = await connection
       .query("SELECT * FROM users WHERE user_name = ? LIMIT 1", [signinID])
       .then(data => {
-        return data[0][0];
+        return data[0];
       })
       .catch(err => {
         next(err);
       });
-    if (rows.length === 0) throw createError(404, "User not found");
-
-    bcrypt.compare(password, rows.password, (err, result) => {
-      if (err) throw err;
-      if (result) {
+    if (rows.length === 0)
+      throw createError(404, "id、またはパスワードが間違っています。");
+    const userData = rows[0];
+    bcrypt.compare(password, userData.password, (err, result) => {
+      try {
+        if (err) throw err;
+        if (!result)
+          throw createError(401, "id、またはパスワードが間違っています。");
         const user = {
-          id: rows.id,
-          user_name: rows.user_name,
-          display_name: rows.display_name,
-          email: rows.email,
-          profile_image_url: rows.profile_image_url
+          id: userData.id,
+          user_name: userData.user_name,
+          display_name: userData.display_name,
+          email: userData.email,
+          profile_image_url: userData.profile_image_url
         };
         const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
           expiresIn: "90 days"
         });
         return res.json({ token });
-      } else {
-        throw createError(401, "Invalid Password");
+      } catch (err) {
+        next(err);
       }
     });
   } catch (err) {
