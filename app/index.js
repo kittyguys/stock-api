@@ -22,17 +22,6 @@ export default class Server {
     this.server.use(cors());
     this.server.use(fileupload());
 
-    // TODO: mongo
-    // mongoose
-    //   .connect("mongodb://localhost:27017/hachet", {
-    //     useNewUrlParser: true,
-    //     useUnifiedTopology: true,
-    //     useFindAndModify: false
-    //   })
-    //   .then(() => console.log("mongoose connected successfully"))
-    //   .catch(err => console.error(err));
-
-    // Initialize routes
     initRouter(this.server);
   }
 

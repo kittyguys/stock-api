@@ -1,6 +1,13 @@
-import mysql from "mysql2/promise";
+import promise from "mysql2/promise";
 
-export const pool = mysql.createPool({
+export const connection = promise.createConnection({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE
+});
+
+export const pool = promise.createPool({
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
@@ -9,7 +16,3 @@ export const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0
 });
-
-const connection = pool;
-
-export default connection;

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import createError from "http-errors";
 import { isUserNameUnique } from "../utils/isUnique";
-import pool from "../configs/mysql";
+import { connection } from "../configs/mysql";
 
 export const signup = async (req, res, next) => {
   try {
@@ -10,7 +10,7 @@ export const signup = async (req, res, next) => {
     const isUnique = await isUserNameUnique(user_name);
     if (!isUnique) throw createError(500, "こちらのidはご利用いただけません。");
 
-    const connection = await pool;
+    const conn = await connection;
     bcrypt.hash(password, 10, async (err, hash) => {
       if (err) throw err;
       const query = {
@@ -18,7 +18,7 @@ export const signup = async (req, res, next) => {
         display_name: req.body.user_name,
         password: hash
       };
-      const rows = await connection
+      const rows = await conn
         .query("INSERT INTO users SET ?", query)
         .then(data => {
           return data[0];
@@ -45,10 +45,10 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
-    const connection = await pool;
+    const conn = await connection;
     const password = req.body.password;
     const signinID = req.body.signinID;
-    const rows = await connection
+    const rows = await conn
       .query("SELECT * FROM users WHERE user_name = ? LIMIT 1", [signinID])
       .then(data => {
         return data[0];
