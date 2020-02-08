@@ -1,15 +1,15 @@
 import bluebird from "bluebird";
 import redis from "redis";
 import Stock from "../models/stocks";
-import { pool } from "../configs/mysql";
+import { connection, pool } from "../configs/mysql";
 
 bluebird.promisifyAll(redis);
 
 export const getStocks = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
+    const conn = await connection;
     const { id } = req.user;
-    const rows = await connection
+    const rows = await conn
       .query(
         "SELECT id,content,created_at FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 10",
         id
@@ -76,21 +76,28 @@ export const createStock = async (req, res, next) => {
   }
 };
 
-export const addStock = async (req, res, next) => {
-  const { id } = req.user;
-  const { content } = req.body;
-  Stock.findOneAndUpdate({ user_id: id }, { $push: { content } }, function(
-    err
-  ) {
-    if (err) return next(err);
-    res.json({ stock: { id: generateID(), content } });
-  });
+export const deleteStock = async (req, res, next) => {
+  try {
+    const { stockId } = req.body;
+    const conn = await connection;
+    await conn
+      .query("DELETE FROM stocks WHERE id = ?", stockId)
+      .then(data => {
+        return data[0];
+      })
+      .catch(err => {
+        next(err);
+      });
+
+    return res.json({ stockId });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const reorderStock = async (req, res, next) => {
-  let connection;
   try {
-    connection = await pool;
+    const conn = await connection;
     const client = await redis.createClient(6379, process.env.REDIS_HOST);
     const { id } = req.user;
     const { stocks } = req.body;
@@ -110,7 +117,7 @@ export const reorderStock = async (req, res, next) => {
     });
 
     for (let i = 0; i < result.length; i++) {
-      await connection
+      await conn
         .query("UPDATE stocks SET stock_order = ? WHERE id = ?", [i, result[i]])
         .then(data => {
           return data[0];
@@ -124,6 +131,19 @@ export const reorderStock = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// not using now
+
+export const addStock = async (req, res, next) => {
+  const { id } = req.user;
+  const { content } = req.body;
+  Stock.findOneAndUpdate({ user_id: id }, { $push: { content } }, function(
+    err
+  ) {
+    if (err) return next(err);
+    res.json({ stock: { id: generateID(), content } });
+  });
 };
 
 const generateID = () => {
