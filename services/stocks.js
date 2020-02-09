@@ -11,7 +11,7 @@ export const getStocks = async (req, res, next) => {
     const { id } = req.user;
     const rows = await conn
       .query(
-        "SELECT id,content,created_at FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 10",
+        "SELECT id,content,created_at,updated_at FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 10",
         id
       )
       .then(data => {
@@ -91,8 +91,18 @@ export const updateStock = async (req, res, next) => {
       .catch(err => {
         next(err);
       });
-
-    return res.json({ stockId });
+    const rows = await conn
+      .query(
+        "SELECT id,content,created_at,updated_at FROM stocks WHERE id = ? LIMIT 1",
+        [stockId]
+      )
+      .then(data => {
+        return data[0][0];
+      })
+      .catch(err => {
+        next(err);
+      });
+    return res.json({ stock: rows });
   } catch (err) {
     next(err);
   }

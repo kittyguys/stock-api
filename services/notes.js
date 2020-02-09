@@ -31,7 +31,7 @@ export const getNote = async (req, res, next) => {
     const { note_id } = req.params;
     const stocks = await connection
       .query(
-        "SELECT stocks.id,stocks.content,stocks.created_at " +
+        "SELECT stocks.id,stocks.content,stocks.created_at,stocks.updated_at " +
           "FROM stocks " +
           "JOIN notes_stocks ON notes_stocks.stock_id = stocks.id " +
           "AND notes_stocks.note_id = ? " +
@@ -109,9 +109,10 @@ export const addStock = async (req, res, next) => {
         throw err;
       });
     const stock = await connection
-      .query("SELECT id,content,created_at FROM stocks WHERE id = ?", [
-        stock_id
-      ])
+      .query(
+        "SELECT id,content,created_at,updated_at FROM stocks WHERE id = ?",
+        [stock_id]
+      )
       .then(data => {
         return data[0];
       })
@@ -183,7 +184,7 @@ export const reorderStocks = async (req, res, next) => {
     }
     const reorderedStocks = await connection
       .query(
-        "SELECT stocks.id,stocks.content,stocks.created_at " +
+        "SELECT stocks.id,stocks.content,stocks.created_at,stocks.updated_at " +
           "FROM stocks " +
           "JOIN notes_stocks ON notes_stocks.stock_id = stocks.id " +
           "AND notes_stocks.note_id = ? " +
