@@ -76,6 +76,28 @@ export const createStock = async (req, res, next) => {
   }
 };
 
+export const updateStock = async (req, res, next) => {
+  try {
+    const { stockId, content } = req.body;
+    const conn = await connection;
+    const columns = {
+      content
+    };
+    await conn
+      .query("UPDATE stocks SET ? where id = ?", [columns, stockId])
+      .then(data => {
+        return data[0];
+      })
+      .catch(err => {
+        next(err);
+      });
+
+    return res.json({ stockId });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deleteStock = async (req, res, next) => {
   try {
     const { stockId } = req.body;

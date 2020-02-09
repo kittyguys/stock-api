@@ -3,6 +3,7 @@ import {
   getStocks,
   createStock,
   addStock,
+  updateStock,
   deleteStock,
   reorderStock
 } from "../services/stocks";
@@ -11,7 +12,7 @@ const router = Router();
 
 router.get("/stocks", getStocks);
 router.post("/stocks", createStock);
-router.patch("/stocks", addStock);
+router.patch("/stocks", updateStock);
 router.delete("/stocks", deleteStock);
 router.patch("/stocks/reorder", reorderStock);
 
