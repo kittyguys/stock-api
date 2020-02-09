@@ -1,7 +1,7 @@
 import bluebird from "bluebird";
 import redis from "redis";
 import Stock from "../models/stocks";
-import { connection, pool } from "../configs/mysql";
+import { connection } from "../configs/mysql";
 
 bluebird.promisifyAll(redis);
 
@@ -30,10 +30,8 @@ export const getStocks = async (req, res, next) => {
 };
 
 export const createStock = async (req, res, next) => {
-  let connection;
   try {
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
+    const conn = await connection;
     const { id } = req.user;
     const { content } = req.body;
     const query = {
@@ -45,7 +43,7 @@ export const createStock = async (req, res, next) => {
       content: query.content,
       created_at: "now"
     };
-    const rows = await connection
+    const rows = await conn
       .query("INSERT INTO stocks SET ?", query)
       .then(data => {
         return data[0];
@@ -53,7 +51,7 @@ export const createStock = async (req, res, next) => {
       .catch(err => {
         throw err;
       });
-    await connection
+    await conn
       .query("UPDATE stocks SET stock_order = ? WHERE id = ?", [
         rows.insertId,
         rows.insertId
@@ -64,15 +62,10 @@ export const createStock = async (req, res, next) => {
       .catch(err => {
         throw err;
       });
-
-    await connection.commit();
     stock.id = "" + rows.insertId;
     return res.json({ stock });
   } catch (err) {
-    await connection.rollback();
     next(err);
-  } finally {
-    connection.release();
   }
 };
 

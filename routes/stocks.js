@@ -2,7 +2,6 @@ import { Router } from "express";
 import {
   getStocks,
   createStock,
-  addStock,
   updateStock,
   deleteStock,
   reorderStock

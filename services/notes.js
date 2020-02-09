@@ -1,11 +1,11 @@
-import pool from "../configs/mysql";
+import { connection } from "../configs/mysql";
 import redis from "redis";
 
 export const getNotes = async (req, res, next) => {
   try {
-    const connection = await pool;
+    const conn = await connection;
     const { id } = req.user;
-    const rows = await connection
+    const rows = await conn
       .query(
         "SELECT id,title,created_at FROM notes WHERE user_id=? ORDER BY updated_at DESC",
         id
@@ -27,9 +27,9 @@ export const getNotes = async (req, res, next) => {
 
 export const getNote = async (req, res, next) => {
   try {
-    const connection = await pool;
+    const conn = await connection;
     const { note_id } = req.params;
-    const stocks = await connection
+    const stocks = await conn
       .query(
         "SELECT stocks.id,stocks.content,stocks.created_at,stocks.updated_at " +
           "FROM stocks " +
@@ -52,7 +52,7 @@ export const getNote = async (req, res, next) => {
 
 export const createNote = async (req, res, next) => {
   try {
-    const connection = await pool;
+    const conn = await connection;
     const { id } = req.user;
     const { title } = req.body;
     const query = {
@@ -63,7 +63,7 @@ export const createNote = async (req, res, next) => {
       id: null,
       title
     };
-    const rows = await connection
+    const rows = await conn
       .query("INSERT INTO notes SET ?", query)
       .then(data => {
         return data[0];
@@ -79,17 +79,15 @@ export const createNote = async (req, res, next) => {
 };
 
 export const addStock = async (req, res, next) => {
-  let connection;
   try {
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
+    const conn = await connection;
     const { note_id } = req.params;
     const { stock_id } = req.body;
     const query = {
       note_id,
       stock_id
     };
-    const rows = await connection
+    const rows = await conn
       .query("INSERT INTO notes_stocks SET ?", query)
       .then(data => {
         return data[0];
@@ -97,7 +95,7 @@ export const addStock = async (req, res, next) => {
       .catch(err => {
         throw err;
       });
-    await connection
+    await conn
       .query("UPDATE notes_stocks SET stock_order = ? WHERE stock_id = ?", [
         rows.insertId,
         stock_id
@@ -108,7 +106,7 @@ export const addStock = async (req, res, next) => {
       .catch(err => {
         throw err;
       });
-    const stock = await connection
+    const stock = await conn
       .query(
         "SELECT id,content,created_at,updated_at FROM stocks WHERE id = ?",
         [stock_id]
@@ -119,13 +117,9 @@ export const addStock = async (req, res, next) => {
       .catch(err => {
         throw err;
       });
-    await connection.commit();
     return res.json({ stock });
   } catch (err) {
-    await connection.rollback();
     next(err);
-  } finally {
-    connection.release();
   }
 };
 
@@ -149,9 +143,8 @@ export const renameNote = async (req, res, next) => {
 };
 
 export const reorderStocks = async (req, res, next) => {
-  let connection;
   try {
-    connection = await pool.getConnection();
+    const conn = await connection;
     const client = await redis.createClient(6379, process.env.REDIS_HOST);
     const { id } = req.user;
     const { note_id } = req.params;
@@ -173,7 +166,7 @@ export const reorderStocks = async (req, res, next) => {
     });
 
     for (let i = 0; i < result.length; i++) {
-      await connection
+      await conn
         .query("UPDATE notes_stocks SET stock_order = ? WHERE stock_id = ?", [
           i,
           result[i]
@@ -182,7 +175,7 @@ export const reorderStocks = async (req, res, next) => {
           throw err;
         });
     }
-    const reorderedStocks = await connection
+    const reorderedStocks = await conn
       .query(
         "SELECT stocks.id,stocks.content,stocks.created_at,stocks.updated_at " +
           "FROM stocks " +
@@ -199,9 +192,6 @@ export const reorderStocks = async (req, res, next) => {
       });
     return res.json({ stocks: reorderedStocks });
   } catch (err) {
-    await connection.rollback();
     next(err);
-  } finally {
-    connection.release();
   }
 };
