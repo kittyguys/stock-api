@@ -130,7 +130,8 @@ export const reorderStock = async (req, res, next) => {
       return [i, item];
     });
     const values = temp.flat();
-    values.unshift("uid" + id);
+    const key = "uid" + id;
+    values.unshift(key);
 
     client.zadd(values, function(err, response) {
       if (err) throw err;
@@ -151,6 +152,8 @@ export const reorderStock = async (req, res, next) => {
           throw err;
         });
     }
+
+    client.del(key);
 
     res.sendStatus(200);
   } catch (err) {
