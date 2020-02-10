@@ -11,7 +11,7 @@ export const getStocks = async (req, res, next) => {
     const { id } = req.user;
     const rows = await conn
       .query(
-        "SELECT id,content,created_at,updated_at FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 10",
+        "SELECT id,content,created_at,updated_at FROM stocks WHERE user_id = ? ORDER BY stock_order DESC LIMIT 50",
         id
       )
       .then(data => {
