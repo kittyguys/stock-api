@@ -1,13 +1,14 @@
+import promise from "mysql2/promise";
 import bluebird from "bluebird";
 import redis from "redis";
 import Stock from "../models/stocks";
-import { connection } from "../configs/mysql";
+import { connectionData } from "../configs/mysql";
 
 bluebird.promisifyAll(redis);
 
 export const getStocks = async (req, res, next) => {
   try {
-    const conn = await connection;
+    const conn = await promise.createConnection(connectionData);
     const { id } = req.user;
     const rows = await conn
       .query(
@@ -31,7 +32,7 @@ export const getStocks = async (req, res, next) => {
 
 export const createStock = async (req, res, next) => {
   try {
-    const conn = await connection;
+    const conn = await promise.createConnection(connectionData);
     const { id } = req.user;
     const { content } = req.body;
     const query = {
@@ -72,7 +73,7 @@ export const createStock = async (req, res, next) => {
 export const updateStock = async (req, res, next) => {
   try {
     const { stockId, content } = req.body;
-    const conn = await connection;
+    const conn = await promise.createConnection(connectionData);
     const columns = {
       content
     };
@@ -104,7 +105,7 @@ export const updateStock = async (req, res, next) => {
 export const deleteStock = async (req, res, next) => {
   try {
     const { stockId } = req.body;
-    const conn = await connection;
+    const conn = await promise.createConnection(connectionData);
     await conn
       .query("DELETE FROM stocks WHERE id = ?", stockId)
       .then(data => {
@@ -122,8 +123,9 @@ export const deleteStock = async (req, res, next) => {
 
 export const reorderStock = async (req, res, next) => {
   try {
-    const conn = await connection;
-    const client = await redis.createClient(6379, process.env.REDIS_HOST);
+    const conn = await promise.createConnection(connectionData);
+    const host = process.env.REDIS_HOST ? process.env.REDIS_HOST : "localhost";
+    const client = await redis.createClient(6379, host);
     const { id } = req.user;
     const { stocks } = req.body;
     const temp = stocks.map((item, i) => {

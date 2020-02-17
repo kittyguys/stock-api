@@ -1,7 +1,8 @@
-import { connection } from "../configs/mysql";
+import promise from "mysql2/promise";
+import { connectionData } from "../configs/mysql";
 
 export const isUserNameUnique = async userName => {
-  const conn = await connection;
+  const conn = await promise.createConnection(connectionData);
   const result = await conn
     .query("SELECT * FROM users WHERE user_name = ? LIMIT 1", [userName])
     .then(data => {
