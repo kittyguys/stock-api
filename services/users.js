@@ -1,6 +1,7 @@
+import promise from "mysql2/promise";
 import jwt from "jsonwebtoken";
 import { isUserNameUnique } from "../utils/isUnique";
-import pool from "../configs/mysql";
+import { connectionData } from "../configs/mysql";
 import { s3 } from "../configs/aws";
 
 export const getUsers = async (req, res, next) => {
@@ -23,14 +24,14 @@ export const checkUserName = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
-    const connection = await pool;
+    const conn = await promise.createConnection(connectionData);
     const { id } = req.user;
     const query = req.body;
     const files = req.files;
 
     const uploadFile = (file, filename) => {
       const params = {
-        Bucket: "hachet-stock-test",
+        Bucket: "stock-s4",
         Key: filename,
         Body: file,
         ACL: "public-read"
@@ -40,12 +41,11 @@ export const updateUser = async (req, res, next) => {
         if (err) {
           throw err;
         }
-        console.log(`File uploaded successfully. ${data.Location}`);
         const columns = {
           ...query,
           profile_image_url: data.Location
         };
-        await connection
+        await conn
           .query("UPDATE users SET ? where id = ?", [columns, id])
           .then(data => {
             return data[0];
@@ -53,7 +53,7 @@ export const updateUser = async (req, res, next) => {
           .catch(err => {
             next(err);
           });
-        const rows = await connection
+        const rows = await conn
           .query("SELECT * FROM users WHERE id = ? LIMIT 1", [id])
           .then(data => {
             return data[0][0];
@@ -77,7 +77,7 @@ export const updateUser = async (req, res, next) => {
       uploadFile(files.profile_image_url.data, files.profile_image_url.name);
     } else {
       if (Object.entries(query).length > 0) {
-        await connection
+        await conn
           .query("UPDATE users SET ? where id = ?", [query, id])
           .then(data => {
             return data[0];
@@ -85,7 +85,7 @@ export const updateUser = async (req, res, next) => {
           .catch(err => {
             next(err);
           });
-        const rows = await connection
+        const rows = await conn
           .query("SELECT * FROM users WHERE id = ? LIMIT 1", [id])
           .then(data => {
             return data[0][0];
@@ -107,8 +107,6 @@ export const updateUser = async (req, res, next) => {
       throw new Error("empty object"); // TODO
     }
   } catch (err) {
-    console.log(err.message);
-
     next(err.message);
   }
 };
@@ -116,7 +114,7 @@ export const updateUser = async (req, res, next) => {
 // TODO
 const createBucket = () => {
   const params = {
-    Bucket: "hachet-stock-test",
+    Bucket: "stock-s4",
     CreateBucketConfiguration: {
       // Set your region here
       LocationConstraint: "ap-northeast-1"
