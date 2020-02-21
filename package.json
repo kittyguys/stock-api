@@ -6,8 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon -r dotenv/config --exec babel-node server.js",
-    "dev:start": "pm2 start --name web --interpreter babel-node server.js",
-    "dev:stop": "pm2 stop web"
+    "prod:start": "NODE_ENV=production node_modules/.bin/forever -c node_modules/.bin/babel-node server.js",
+    "prod:stop": "node_modules/.bin/forever stopall",
+    "prod:list": "node_modules/.bin/forever list"
   },
   "author": "",
   "license": "ISC",
@@ -31,7 +32,7 @@
     "@babel/node": "^7.7.4",
     "@babel/preset-env": "^7.7.4",
     "dotenv": "^8.2.0",
-    "nodemon": "^2.0.1",
-    "pm2": "^4.2.1"
+    "forever": "^2.0.0",
+    "nodemon": "^2.0.1"
   }
 }

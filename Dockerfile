@@ -8,7 +8,10 @@ RUN npm install
 
 COPY . .
 
-RUN apt-get update -qq && \
-  apt-get install -y mariadb-client vim
+# Comment in these lines below when you need to use "wait-for-it.sh"
+# RUN apt-get update -qq && \
+#   apt-get install -y mariadb-client vim
 
-CMD ["npm" ,"start"]
+# CMD ["npm", "run", "dev:start"]
+
+CMD ["npm", "run", "prod:start"]
